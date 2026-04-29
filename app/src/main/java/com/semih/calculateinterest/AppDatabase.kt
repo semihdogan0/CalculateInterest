@@ -1,4 +1,4 @@
-package com.example.kredikartifaiz
+package com.semih.calculateinterest
 
 import android.content.Context
 import androidx.room.Database
@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [`CardEntity.kt`::class, PaymentEntity::class],
+    entities = [CardEntity::class, PaymentEntity::class],
     version = 1,
     exportSchema = false
 )

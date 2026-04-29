@@ -1,4 +1,4 @@
-package com.example.kredikartifaiz
+package com.semih.calculateinterest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -13,7 +13,7 @@ class CardViewModel(
     private val dao: CardDao
 ) : ViewModel() {
 
-    val cards: StateFlow<List<`CardEntity.kt`>> = dao.observeCards()
+    val cards: StateFlow<List<CardEntity>> = dao.observeCards()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -24,7 +24,7 @@ class CardViewModel(
         return dao.observePayments(cardId)
     }
 
-    fun addCard(card: `CardEntity.kt`) {
+    fun addCard(card: CardEntity) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             dao.insertCard(
@@ -36,7 +36,7 @@ class CardViewModel(
         }
     }
 
-    fun updateCard(card: `CardEntity.kt`) {
+    fun updateCard(card: CardEntity) {
         viewModelScope.launch {
             dao.updateCard(
                 card.copy(
@@ -46,7 +46,7 @@ class CardViewModel(
         }
     }
 
-    fun deleteCard(card: `CardEntity.kt`) {
+    fun deleteCard(card: CardEntity) {
         viewModelScope.launch {
             dao.deleteCard(card)
         }

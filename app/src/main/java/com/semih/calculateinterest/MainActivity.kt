@@ -1,4 +1,4 @@
-package com.example.kredikartifaiz
+package com.semih.calculateinterest
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -52,19 +52,26 @@ import java.util.Locale
 import kotlin.math.max
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val dao = AppDatabase.getDatabase(applicationContext).cardDao()
+        val dao = AppDatabase.Companion
+            .getDatabase(applicationContext)
+            .cardDao()
 
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     val cardViewModel: CardViewModel = viewModel(
                         factory = CardViewModelFactory(dao)
                     )
 
-                    CreditCardTrackerApp(viewModel = cardViewModel)
+                    CreditCardTrackerApp(
+                        viewModel = cardViewModel
+                    )
                 }
             }
         }
@@ -72,13 +79,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CreditCardTrackerApp(viewModel: CardViewModel) {
+fun CreditCardTrackerApp(
+    viewModel: CardViewModel
+) {
     var screen by rememberSaveable { mutableStateOf("list") }
     var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     val cards by viewModel.cards.collectAsState()
+
     val selectedCard = selectedCardId?.let { id ->
-        cards.firstOrNull { it.id == id }
+        cards.firstOrNull { card -> card.id == id }
     }
 
     BackHandler(enabled = screen != "list") {
@@ -122,15 +132,7 @@ fun CreditCardTrackerApp(viewModel: CardViewModel) {
 
         "detail" -> {
             if (selectedCard == null) {
-                CardListScreen(
-                    cards = cards,
-                    viewModel = viewModel,
-                    onAddClick = { screen = "add" },
-                    onCardClick = { card ->
-                        selectedCardId = card.id
-                        screen = "detail"
-                    }
-                )
+                screen = "list"
             } else {
                 CardDetailScreen(
                     card = selectedCard,
@@ -173,10 +175,10 @@ fun CreditCardTrackerApp(viewModel: CardViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardListScreen(
-    cards: List<`CardEntity.kt`>,
+    cards: List<CardEntity>,
     viewModel: CardViewModel,
     onAddClick: () -> Unit,
-    onCardClick: (`CardEntity.kt`) -> Unit
+    onCardClick: (CardEntity) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -187,7 +189,9 @@ fun CardListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
+            FloatingActionButton(
+                onClick = onAddClick
+            ) {
                 Text("+")
             }
         }
@@ -208,7 +212,9 @@ fun CardListScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Button(onClick = onAddClick) {
+                Button(
+                    onClick = onAddClick
+                ) {
                     Text("İlk Kartı Ekle")
                 }
             }
@@ -220,11 +226,17 @@ fun CardListScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(cards, key = { it.id }) { card ->
+                items(
+                    items = cards,
+                    key = { card -> card.id }
+                ) { card ->
                     val paymentFlow = remember(card.id) {
                         viewModel.paymentsFor(card.id)
                     }
-                    val payments by paymentFlow.collectAsState(initial = emptyList())
+
+                    val payments by paymentFlow.collectAsState(
+                        initial = emptyList()
+                    )
 
                     CardSummaryItem(
                         card = card,
@@ -241,13 +253,23 @@ fun CardListScreen(
 
 @Composable
 fun CardSummaryItem(
-    card: `CardEntity.kt`,
+    card: CardEntity,
     payments: List<PaymentEntity>,
     onClick: () -> Unit
 ) {
-    val totalPaid = payments.sumOf { it.amount }
-    val remainingDebt = max(0.0, card.totalDebt - totalPaid)
-    val automaticLateDays = calculateLateDaysFromDueDay(card.dueDay)
+    val totalPaid = payments.sumOf { payment ->
+        payment.amount
+    }
+
+    val remainingDebt = max(
+        a = 0.0,
+        b = card.totalDebt - totalPaid
+    )
+
+    val automaticLateDays = calculateLateDaysFromDueDay(
+        dueDay = card.dueDay
+    )
+
     val estimatedInterest = calculateEstimatedInterest(
         remainingDebt = remainingDebt,
         monthlyInterestRate = card.monthlyInterestRate,
@@ -257,8 +279,12 @@ fun CardSummaryItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .clickable {
+                onClick()
+            },
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -271,7 +297,9 @@ fun CardSummaryItem(
             )
 
             if (card.bankName.isNotBlank()) {
-                Text(text = card.bankName)
+                Text(
+                    text = card.bankName
+                )
             }
 
             Text("Ekstre borcu: ${formatMoney(card.totalDebt)}")
@@ -288,39 +316,52 @@ fun CardSummaryItem(
 @Composable
 fun CardFormScreen(
     title: String,
-    initialCard: `CardEntity.kt`?,
+    initialCard: CardEntity?,
     onBack: () -> Unit,
-    onSave: (`CardEntity.kt`) -> Unit
+    onSave: (CardEntity) -> Unit
 ) {
     var cardName by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.cardName ?: "")
     }
+
     var bankName by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.bankName ?: "")
     }
+
     var totalDebtText by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.totalDebt?.let { plainNumber(it) } ?: "")
     }
+
     var interestRateText by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.monthlyInterestRate?.let { plainNumber(it) } ?: "")
     }
+
     var statementDayText by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.statementDay?.toString() ?: "")
     }
+
     var dueDayText by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.dueDay?.toString() ?: "")
     }
+
     var note by rememberSaveable(initialCard?.id) {
         mutableStateOf(initialCard?.note ?: "")
     }
-    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+
+    var errorMessage by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = {
+                    Text(title)
+                },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
+                    TextButton(
+                        onClick = onBack
+                    ) {
                         Text("Geri")
                     }
                 }
@@ -337,9 +378,15 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = cardName,
-                    onValueChange = { cardName = it },
-                    label = { Text("Kart adı") },
-                    placeholder = { Text("Örn: Akbank Axess") },
+                    onValueChange = {
+                        cardName = it
+                    },
+                    label = {
+                        Text("Kart adı")
+                    },
+                    placeholder = {
+                        Text("Örn: Garanti Bonus")
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -347,9 +394,15 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = bankName,
-                    onValueChange = { bankName = it },
-                    label = { Text("Banka adı") },
-                    placeholder = { Text("Örn: Akbank") },
+                    onValueChange = {
+                        bankName = it
+                    },
+                    label = {
+                        Text("Banka adı")
+                    },
+                    placeholder = {
+                        Text("Örn: Garanti")
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -357,10 +410,18 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = totalDebtText,
-                    onValueChange = { totalDebtText = it },
-                    label = { Text("Mevcut ekstre borcu") },
-                    placeholder = { Text("Örn: 25000 veya 25000,50") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    onValueChange = {
+                        totalDebtText = it
+                    },
+                    label = {
+                        Text("Mevcut ekstre borcu")
+                    },
+                    placeholder = {
+                        Text("Örn: 25000")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -368,10 +429,18 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = interestRateText,
-                    onValueChange = { interestRateText = it },
-                    label = { Text("Aylık faiz oranı (%)") },
-                    placeholder = { Text("Örn: 4,25") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    onValueChange = {
+                        interestRateText = it
+                    },
+                    label = {
+                        Text("Aylık faiz oranı (%)")
+                    },
+                    placeholder = {
+                        Text("Örn: 4,25")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -379,12 +448,20 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = statementDayText,
-                    onValueChange = {
-                        statementDayText = it.filter { char -> char.isDigit() }.take(2)
+                    onValueChange = { value ->
+                        statementDayText = value
+                            .filter { char -> char.isDigit() }
+                            .take(2)
                     },
-                    label = { Text("Hesap kesim günü") },
-                    placeholder = { Text("Örn: 10") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = {
+                        Text("Hesap kesim günü")
+                    },
+                    placeholder = {
+                        Text("Örn: 10")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -392,12 +469,20 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = dueDayText,
-                    onValueChange = {
-                        dueDayText = it.filter { char -> char.isDigit() }.take(2)
+                    onValueChange = { value ->
+                        dueDayText = value
+                            .filter { char -> char.isDigit() }
+                            .take(2)
                     },
-                    label = { Text("Son ödeme günü") },
-                    placeholder = { Text("Örn: 20") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = {
+                        Text("Son ödeme günü")
+                    },
+                    placeholder = {
+                        Text("Örn: 20")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -405,18 +490,24 @@ fun CardFormScreen(
             item {
                 OutlinedTextField(
                     value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Not") },
-                    placeholder = { Text("İsteğe bağlı") },
+                    onValueChange = {
+                        note = it
+                    },
+                    label = {
+                        Text("Not")
+                    },
+                    placeholder = {
+                        Text("İsteğe bağlı")
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
             }
 
             item {
-                errorMessage?.let {
+                if (errorMessage != null) {
                     Text(
-                        text = it,
+                        text = errorMessage ?: "",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -455,7 +546,7 @@ fun CardFormScreen(
                             else -> {
                                 val now = System.currentTimeMillis()
 
-                                val card = `CardEntity.kt`(
+                                val card = CardEntity(
                                     id = initialCard?.id ?: 0,
                                     cardName = cardName.trim(),
                                     bankName = bankName.trim(),
@@ -484,7 +575,7 @@ fun CardFormScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardDetailScreen(
-    card: `CardEntity.kt`,
+    card: CardEntity,
     viewModel: CardViewModel,
     onBack: () -> Unit,
     onEdit: () -> Unit,
@@ -493,33 +584,51 @@ fun CardDetailScreen(
     val paymentFlow = remember(card.id) {
         viewModel.paymentsFor(card.id)
     }
-    val payments by paymentFlow.collectAsState(initial = emptyList())
 
-    val totalPaid = payments.sumOf { it.amount }
-    val remainingDebt = max(0.0, card.totalDebt - totalPaid)
-    val automaticLateDays = calculateLateDaysFromDueDay(card.dueDay)
+    val payments by paymentFlow.collectAsState(
+        initial = emptyList()
+    )
+
+    val totalPaid = payments.sumOf { payment ->
+        payment.amount
+    }
+
+    val remainingDebt = max(
+        a = 0.0,
+        b = card.totalDebt - totalPaid
+    )
+
+    val automaticLateDays = calculateLateDaysFromDueDay(
+        dueDay = card.dueDay
+    )
 
     var interestDaysText by rememberSaveable(card.id) {
         mutableStateOf("")
     }
-    val interestDays = interestDaysText.toIntOrNull() ?: automaticLateDays
+
+    val interestDays = interestDaysText.toIntOrNull()
+        ?: automaticLateDays
 
     val estimatedInterest = calculateEstimatedInterest(
         remainingDebt = remainingDebt,
         monthlyInterestRate = card.monthlyInterestRate,
         days = interestDays
     )
+
     val totalWithInterest = remainingDebt + estimatedInterest
 
     var paymentAmountText by rememberSaveable(card.id) {
         mutableStateOf("")
     }
+
     var paymentNote by rememberSaveable(card.id) {
         mutableStateOf("")
     }
+
     var paymentError by rememberSaveable(card.id) {
         mutableStateOf<String?>(null)
     }
+
     var showDeleteCardDialog by rememberSaveable(card.id) {
         mutableStateOf(false)
     }
@@ -527,14 +636,20 @@ fun CardDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(card.cardName) },
+                title = {
+                    Text(card.cardName)
+                },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
+                    TextButton(
+                        onClick = onBack
+                    ) {
                         Text("Geri")
                     }
                 },
                 actions = {
-                    TextButton(onClick = onEdit) {
+                    TextButton(
+                        onClick = onEdit
+                    ) {
                         Text("Düzenle")
                     }
                 }
@@ -551,7 +666,9 @@ fun CardDetailScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 4.dp
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(18.dp),
@@ -584,7 +701,9 @@ fun CardDetailScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 4.dp
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(18.dp),
@@ -600,12 +719,20 @@ fun CardDetailScreen(
 
                         OutlinedTextField(
                             value = interestDaysText,
-                            onValueChange = {
-                                interestDaysText = it.filter { char -> char.isDigit() }.take(4)
+                            onValueChange = { value ->
+                                interestDaysText = value
+                                    .filter { char -> char.isDigit() }
+                                    .take(4)
                             },
-                            label = { Text("Faiz hesaplanacak gün") },
-                            placeholder = { Text("Boş bırakılırsa otomatik: $automaticLateDays") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            label = {
+                                Text("Faiz hesaplanacak gün")
+                            },
+                            placeholder = {
+                                Text("Boş bırakılırsa otomatik: $automaticLateDays")
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -614,7 +741,7 @@ fun CardDetailScreen(
                         Text("Faiz dahil tahmini toplam: ${formatMoney(totalWithInterest)}")
 
                         Text(
-                            text = "Not: Bu hesaplama basit günlük faiz yaklaşımıdır. Bankanın uyguladığı akdi/gecikme faizi, vergi ve asgari ödeme kuralları farklı olabilir.",
+                            text = "Not: Bu hesaplama yaklaşık bir tahmindir. Bankaların uyguladığı vergi, gecikme faizi ve asgari ödeme kuralları farklı olabilir.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -624,7 +751,9 @@ fun CardDetailScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 4.dp
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(18.dp),
@@ -638,24 +767,38 @@ fun CardDetailScreen(
 
                         OutlinedTextField(
                             value = paymentAmountText,
-                            onValueChange = { paymentAmountText = it },
-                            label = { Text("Ödeme tutarı") },
-                            placeholder = { Text("Örn: 5000") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            onValueChange = {
+                                paymentAmountText = it
+                            },
+                            label = {
+                                Text("Ödeme tutarı")
+                            },
+                            placeholder = {
+                                Text("Örn: 5000")
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
 
                         OutlinedTextField(
                             value = paymentNote,
-                            onValueChange = { paymentNote = it },
-                            label = { Text("Ödeme notu") },
-                            placeholder = { Text("Örn: Asgari ödeme") },
+                            onValueChange = {
+                                paymentNote = it
+                            },
+                            label = {
+                                Text("Ödeme notu")
+                            },
+                            placeholder = {
+                                Text("Örn: Asgari ödeme")
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        paymentError?.let {
+                        if (paymentError != null) {
                             Text(
-                                text = it,
+                                text = paymentError ?: "",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -673,6 +816,7 @@ fun CardDetailScreen(
                                         amount = amount,
                                         note = paymentNote
                                     )
+
                                     paymentAmountText = ""
                                     paymentNote = ""
                                     paymentError = null
@@ -698,7 +842,10 @@ fun CardDetailScreen(
                     Text("Bu karta ait ödeme kaydı yok.")
                 }
             } else {
-                items(payments, key = { it.id }) { payment ->
+                items(
+                    items = payments,
+                    key = { payment -> payment.id }
+                ) { payment ->
                     PaymentRow(
                         payment = payment,
                         onDelete = {
@@ -709,7 +856,9 @@ fun CardDetailScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 OutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
@@ -725,10 +874,14 @@ fun CardDetailScreen(
 
     if (showDeleteCardDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteCardDialog = false },
-            title = { Text("Kart silinsin mi?") },
+            onDismissRequest = {
+                showDeleteCardDialog = false
+            },
+            title = {
+                Text("Kart silinsin mi?")
+            },
             text = {
-                Text("Bu kart ve bu karta ait tüm ödeme kayıtları telefondan silinecek.")
+                Text("Bu kart ve bu karta ait tüm ödeme kayıtları silinecek.")
             },
             confirmButton = {
                 TextButton(
@@ -742,7 +895,11 @@ fun CardDetailScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteCardDialog = false }) {
+                TextButton(
+                    onClick = {
+                        showDeleteCardDialog = false
+                    }
+                ) {
                     Text("Vazgeç")
                 }
             }
@@ -761,7 +918,9 @@ fun PaymentRow(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -777,7 +936,11 @@ fun PaymentRow(
                     fontWeight = FontWeight.Bold
                 )
 
-                TextButton(onClick = { showDeleteDialog = true }) {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = true
+                    }
+                ) {
                     Text("Sil")
                 }
             }
@@ -792,9 +955,15 @@ fun PaymentRow(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Ödeme silinsin mi?") },
-            text = { Text("Bu ödeme kaydı silinirse kalan borç yeniden hesaplanır.") },
+            onDismissRequest = {
+                showDeleteDialog = false
+            },
+            title = {
+                Text("Ödeme silinsin mi?")
+            },
+            text = {
+                Text("Bu ödeme silinirse kalan borç yeniden hesaplanır.")
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -806,7 +975,11 @@ fun PaymentRow(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                    }
+                ) {
                     Text("Vazgeç")
                 }
             }
@@ -824,55 +997,89 @@ fun calculateEstimatedInterest(
     }
 
     val dailyRate = (monthlyInterestRate / 100.0) / 30.0
+
     return remainingDebt * dailyRate * days
 }
 
-fun calculateLateDaysFromDueDay(dueDay: Int): Int {
+fun calculateLateDaysFromDueDay(
+    dueDay: Int
+): Int {
     val today = Calendar.getInstance()
+
     today.set(Calendar.HOUR_OF_DAY, 0)
     today.set(Calendar.MINUTE, 0)
     today.set(Calendar.SECOND, 0)
     today.set(Calendar.MILLISECOND, 0)
 
     val dueDate = Calendar.getInstance()
+
     dueDate.set(Calendar.HOUR_OF_DAY, 0)
     dueDate.set(Calendar.MINUTE, 0)
     dueDate.set(Calendar.SECOND, 0)
     dueDate.set(Calendar.MILLISECOND, 0)
 
-    val maxDayOfCurrentMonth = dueDate.getActualMaximum(Calendar.DAY_OF_MONTH)
-    val safeDueDay = dueDay.coerceIn(1, maxDayOfCurrentMonth)
+    val maxDayOfCurrentMonth = dueDate.getActualMaximum(
+        Calendar.DAY_OF_MONTH
+    )
 
-    dueDate.set(Calendar.DAY_OF_MONTH, safeDueDay)
+    val safeDueDay = dueDay.coerceIn(
+        minimumValue = 1,
+        maximumValue = maxDayOfCurrentMonth
+    )
+
+    dueDate.set(
+        Calendar.DAY_OF_MONTH,
+        safeDueDay
+    )
 
     if (!today.after(dueDate)) {
         return 0
     }
 
     val millisecondsPerDay = 24L * 60L * 60L * 1000L
+
     return ((today.timeInMillis - dueDate.timeInMillis) / millisecondsPerDay).toInt()
 }
 
-fun parseNumber(input: String): Double? {
-    val clean = input.trim().replace(" ", "")
-    if (clean.isBlank()) return null
+fun parseNumber(
+    input: String
+): Double? {
+    val clean = input
+        .trim()
+        .replace(" ", "")
 
-    val commaCount = clean.count { it == ',' }
-    val dotCount = clean.count { it == '.' }
+    if (clean.isBlank()) {
+        return null
+    }
+
+    val commaCount = clean.count { char ->
+        char == ','
+    }
+
+    val dotCount = clean.count { char ->
+        char == '.'
+    }
 
     if (commaCount > 0 && dotCount > 0) {
         val lastComma = clean.lastIndexOf(',')
         val lastDot = clean.lastIndexOf('.')
 
         return if (lastComma > lastDot) {
-            clean.replace(".", "").replace(",", ".").toDoubleOrNull()
+            clean
+                .replace(".", "")
+                .replace(",", ".")
+                .toDoubleOrNull()
         } else {
-            clean.replace(",", "").toDoubleOrNull()
+            clean
+                .replace(",", "")
+                .toDoubleOrNull()
         }
     }
 
     if (commaCount == 1 && dotCount == 0) {
-        return clean.replace(",", ".").toDoubleOrNull()
+        return clean
+            .replace(",", ".")
+            .toDoubleOrNull()
     }
 
     if (dotCount == 1 && commaCount == 0) {
@@ -880,7 +1087,9 @@ fun parseNumber(input: String): Double? {
         val digitsAfterDot = clean.length - dotIndex - 1
 
         return if (digitsAfterDot == 3 && dotIndex > 0) {
-            clean.replace(".", "").toDoubleOrNull()
+            clean
+                .replace(".", "")
+                .toDoubleOrNull()
         } else {
             clean.toDoubleOrNull()
         }
@@ -889,23 +1098,45 @@ fun parseNumber(input: String): Double? {
     return clean.toDoubleOrNull()
 }
 
-fun plainNumber(value: Double): String {
+fun plainNumber(
+    value: Double
+): String {
     return if (value % 1.0 == 0.0) {
         value.toLong().toString()
     } else {
-        value.toString().replace(".", ",")
+        value
+            .toString()
+            .replace(".", ",")
     }
 }
 
-fun formatMoney(value: Double): String {
-    return NumberFormat.getCurrencyInstance(Locale("tr", "TR")).format(value)
+fun formatMoney(
+    value: Double
+): String {
+    return NumberFormat
+        .getCurrencyInstance(Locale("tr", "TR"))
+        .format(value)
 }
 
-fun formatRate(value: Double): String {
-    return String.format(Locale("tr", "TR"), "%.2f", value)
+fun formatRate(
+    value: Double
+): String {
+    return String.format(
+        Locale("tr", "TR"),
+        "%.2f",
+        value
+    )
 }
 
-fun formatDate(millis: Long): String {
-    val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
-    return formatter.format(Date(millis))
+fun formatDate(
+    millis: Long
+): String {
+    val formatter = SimpleDateFormat(
+        "dd.MM.yyyy HH:mm",
+        Locale("tr", "TR")
+    )
+
+    return formatter.format(
+        Date(millis)
+    )
 }

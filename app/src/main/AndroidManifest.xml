@@ -8,7 +8,7 @@
         android:theme="@style/Theme.KrediKartiFaiz">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.semih.calculateinterest.MainActivity"
             android:exported="true">
 
             <intent-filter>
