@@ -3,7 +3,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Kart Faiz Takip"
+        android:label="Credit Card Interest Tracker"
         android:supportsRtl="true"
         android:theme="@style/Theme.KrediKartiFaiz">
 

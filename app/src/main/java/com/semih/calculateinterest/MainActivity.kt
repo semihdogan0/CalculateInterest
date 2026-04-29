@@ -118,7 +118,7 @@ fun CreditCardTrackerApp(
 
         "add" -> {
             CardFormScreen(
-                title = "Yeni Kart Ekle",
+                title = "Add New Card",
                 initialCard = null,
                 onBack = {
                     screen = "list"
@@ -157,7 +157,7 @@ fun CreditCardTrackerApp(
                 screen = "list"
             } else {
                 CardFormScreen(
-                    title = "Kartı Düzenle",
+                    title = "Edit Card",
                     initialCard = selectedCard,
                     onBack = {
                         screen = "detail"
@@ -184,7 +184,7 @@ fun CardListScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Kart Faiz Takip")
+                    Text("Credit Card Interest Tracker")
                 }
             )
         },
@@ -206,7 +206,7 @@ fun CardListScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Henüz kart eklenmedi.",
+                    text = "No cards have been added yet.",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -215,7 +215,7 @@ fun CardListScreen(
                 Button(
                     onClick = onAddClick
                 ) {
-                    Text("İlk Kartı Ekle")
+                    Text("Add First Card")
                 }
             }
         } else {
@@ -302,12 +302,12 @@ fun CardSummaryItem(
                 )
             }
 
-            Text("Ekstre borcu: ${formatMoney(card.totalDebt)}")
-            Text("Yapılan ödeme: ${formatMoney(totalPaid)}")
-            Text("Kalan borç: ${formatMoney(remainingDebt)}")
-            Text("Aylık faiz oranı: %${formatRate(card.monthlyInterestRate)}")
-            Text("Tahmini gecikme günü: $automaticLateDays")
-            Text("Bugüne göre tahmini faiz: ${formatMoney(estimatedInterest)}")
+            Text("Statement debt: ${formatMoney(card.totalDebt)}")
+            Text("Total paid: ${formatMoney(totalPaid)}")
+            Text("Remaining debt: ${formatMoney(remainingDebt)}")
+            Text("Monthly interest rate: %${formatRate(card.monthlyInterestRate)}")
+            Text("Estimated late days: $automaticLateDays")
+            Text("Estimated interest as of today: ${formatMoney(estimatedInterest)}")
         }
     }
 }
@@ -362,7 +362,7 @@ fun CardFormScreen(
                     TextButton(
                         onClick = onBack
                     ) {
-                        Text("Geri")
+                        Text("Back")
                     }
                 }
             )
@@ -382,10 +382,10 @@ fun CardFormScreen(
                         cardName = it
                     },
                     label = {
-                        Text("Kart adı")
+                        Text("Card name")
                     },
                     placeholder = {
-                        Text("Örn: Garanti Bonus")
+                        Text("Example: Garanti Bonus")
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -398,10 +398,10 @@ fun CardFormScreen(
                         bankName = it
                     },
                     label = {
-                        Text("Banka adı")
+                        Text("Bank name")
                     },
                     placeholder = {
-                        Text("Örn: Garanti")
+                        Text("Example: Garanti")
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -414,10 +414,10 @@ fun CardFormScreen(
                         totalDebtText = it
                     },
                     label = {
-                        Text("Mevcut ekstre borcu")
+                        Text("Current statement debt")
                     },
                     placeholder = {
-                        Text("Örn: 25000")
+                        Text("Example: 25000")
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
@@ -433,10 +433,10 @@ fun CardFormScreen(
                         interestRateText = it
                     },
                     label = {
-                        Text("Aylık faiz oranı (%)")
+                        Text("Monthly interest rate (%)")
                     },
                     placeholder = {
-                        Text("Örn: 4,25")
+                        Text("Example: 4.25")
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
@@ -454,10 +454,10 @@ fun CardFormScreen(
                             .take(2)
                     },
                     label = {
-                        Text("Hesap kesim günü")
+                        Text("Statement day")
                     },
                     placeholder = {
-                        Text("Örn: 10")
+                        Text("Example: 10")
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
@@ -475,10 +475,10 @@ fun CardFormScreen(
                             .take(2)
                     },
                     label = {
-                        Text("Son ödeme günü")
+                        Text("Due day")
                     },
                     placeholder = {
-                        Text("Örn: 20")
+                        Text("Example: 20")
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
@@ -494,10 +494,10 @@ fun CardFormScreen(
                         note = it
                     },
                     label = {
-                        Text("Not")
+                        Text("Note")
                     },
                     placeholder = {
-                        Text("İsteğe bağlı")
+                        Text("Optional")
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
@@ -524,23 +524,23 @@ fun CardFormScreen(
 
                         when {
                             cardName.trim().isBlank() -> {
-                                errorMessage = "Kart adı boş olamaz."
+                                errorMessage = "Card name cannot be empty."
                             }
 
                             debt == null || debt < 0.0 -> {
-                                errorMessage = "Geçerli bir borç tutarı gir."
+                                errorMessage = "Please enter a valid debt amount."
                             }
 
                             interestRate == null || interestRate < 0.0 -> {
-                                errorMessage = "Geçerli bir faiz oranı gir."
+                                errorMessage = "Please enter a valid interest rate."
                             }
 
                             statementDay == null || statementDay !in 1..31 -> {
-                                errorMessage = "Hesap kesim günü 1-31 arasında olmalı."
+                                errorMessage = "Statement day must be between 1 and 31."
                             }
 
                             dueDay == null || dueDay !in 1..31 -> {
-                                errorMessage = "Son ödeme günü 1-31 arasında olmalı."
+                                errorMessage = "Due day must be between 1 and 31."
                             }
 
                             else -> {
@@ -565,7 +565,7 @@ fun CardFormScreen(
                         }
                     }
                 ) {
-                    Text("Kaydet")
+                    Text("Save")
                 }
             }
         }
@@ -643,14 +643,14 @@ fun CardDetailScreen(
                     TextButton(
                         onClick = onBack
                     ) {
-                        Text("Geri")
+                        Text("Back")
                     }
                 },
                 actions = {
                     TextButton(
                         onClick = onEdit
                     ) {
-                        Text("Düzenle")
+                        Text("Edit")
                     }
                 }
             )
@@ -675,24 +675,24 @@ fun CardDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Borç Özeti",
+                            text = "Debt Summary",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
 
                         if (card.bankName.isNotBlank()) {
-                            Text("Banka: ${card.bankName}")
+                            Text("Bank: ${card.bankName}")
                         }
 
-                        Text("Ekstre borcu: ${formatMoney(card.totalDebt)}")
-                        Text("Yapılan toplam ödeme: ${formatMoney(totalPaid)}")
-                        Text("Kalan borç: ${formatMoney(remainingDebt)}")
-                        Text("Hesap kesim günü: Her ayın ${card.statementDay}. günü")
-                        Text("Son ödeme günü: Her ayın ${card.dueDay}. günü")
-                        Text("Aylık faiz oranı: %${formatRate(card.monthlyInterestRate)}")
+                        Text("Statement debt: ${formatMoney(card.totalDebt)}")
+                        Text("Total payments: ${formatMoney(totalPaid)}")
+                        Text("Remaining debt: ${formatMoney(remainingDebt)}")
+                        Text("Statement day: Day ${card.statementDay} of each month")
+                        Text("Due day: Day ${card.dueDay} of each month")
+                        Text("Monthly interest rate: %${formatRate(card.monthlyInterestRate)}")
 
                         if (card.note.isNotBlank()) {
-                            Text("Not: ${card.note}")
+                            Text("Note: ${card.note}")
                         }
                     }
                 }
@@ -710,12 +710,12 @@ fun CardDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "Faiz Hesabı",
+                            text = "Interest Calculation",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
 
-                        Text("Bugüne göre otomatik gecikme günü: $automaticLateDays")
+                        Text("Automatic late days as of today: $automaticLateDays")
 
                         OutlinedTextField(
                             value = interestDaysText,
@@ -725,10 +725,10 @@ fun CardDetailScreen(
                                     .take(4)
                             },
                             label = {
-                                Text("Faiz hesaplanacak gün")
+                                Text("Days for interest calculation")
                             },
                             placeholder = {
-                                Text("Boş bırakılırsa otomatik: $automaticLateDays")
+                                Text("Leave empty to use automatic value: $automaticLateDays")
                             },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number
@@ -736,12 +736,12 @@ fun CardDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Text("Hesaplanan gün: $interestDays")
-                        Text("Tahmini yansıyacak faiz: ${formatMoney(estimatedInterest)}")
-                        Text("Faiz dahil tahmini toplam: ${formatMoney(totalWithInterest)}")
+                        Text("Calculated days: $interestDays")
+                        Text("Estimated interest: ${formatMoney(estimatedInterest)}")
+                        Text("Estimated total with interest: ${formatMoney(totalWithInterest)}")
 
                         Text(
-                            text = "Not: Bu hesaplama yaklaşık bir tahmindir. Bankaların uyguladığı vergi, gecikme faizi ve asgari ödeme kuralları farklı olabilir.",
+                            text = "Note: This calculation is only an estimate. Banks may apply different tax, late interest, and minimum payment rules.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -760,7 +760,7 @@ fun CardDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "Ödeme Ekle",
+                            text = "Add Payment",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -771,10 +771,10 @@ fun CardDetailScreen(
                                 paymentAmountText = it
                             },
                             label = {
-                                Text("Ödeme tutarı")
+                                Text("Payment amount")
                             },
                             placeholder = {
-                                Text("Örn: 5000")
+                                Text("Example: 5000")
                             },
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Decimal
@@ -788,10 +788,10 @@ fun CardDetailScreen(
                                 paymentNote = it
                             },
                             label = {
-                                Text("Ödeme notu")
+                                Text("Payment note")
                             },
                             placeholder = {
-                                Text("Örn: Asgari ödeme")
+                                Text("Example: Minimum payment")
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -809,7 +809,7 @@ fun CardDetailScreen(
                                 val amount = parseNumber(paymentAmountText)
 
                                 if (amount == null || amount <= 0.0) {
-                                    paymentError = "Geçerli bir ödeme tutarı gir."
+                                    paymentError = "Please enter a valid payment amount."
                                 } else {
                                     viewModel.addPayment(
                                         cardId = card.id,
@@ -823,7 +823,7 @@ fun CardDetailScreen(
                                 }
                             }
                         ) {
-                            Text("Ödemeyi Kaydet")
+                            Text("Save Payment")
                         }
                     }
                 }
@@ -831,7 +831,7 @@ fun CardDetailScreen(
 
             item {
                 Text(
-                    text = "Ödeme Geçmişi",
+                    text = "Payment History",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -839,7 +839,7 @@ fun CardDetailScreen(
 
             if (payments.isEmpty()) {
                 item {
-                    Text("Bu karta ait ödeme kaydı yok.")
+                    Text("No payment records for this card.")
                 }
             } else {
                 items(
@@ -866,7 +866,7 @@ fun CardDetailScreen(
                         showDeleteCardDialog = true
                     }
                 ) {
-                    Text("Kartı Sil")
+                    Text("Delete Card")
                 }
             }
         }
@@ -878,10 +878,10 @@ fun CardDetailScreen(
                 showDeleteCardDialog = false
             },
             title = {
-                Text("Kart silinsin mi?")
+                Text("Delete card?")
             },
             text = {
-                Text("Bu kart ve bu karta ait tüm ödeme kayıtları silinecek.")
+                Text("This card and all related payment records will be deleted.")
             },
             confirmButton = {
                 TextButton(
@@ -891,7 +891,7 @@ fun CardDetailScreen(
                         onDeleted()
                     }
                 ) {
-                    Text("Sil")
+                    Text("Delete")
                 }
             },
             dismissButton = {
@@ -900,7 +900,7 @@ fun CardDetailScreen(
                         showDeleteCardDialog = false
                     }
                 ) {
-                    Text("Vazgeç")
+                    Text("Cancel")
                 }
             }
         )
@@ -941,14 +941,14 @@ fun PaymentRow(
                         showDeleteDialog = true
                     }
                 ) {
-                    Text("Sil")
+                    Text("Delete")
                 }
             }
 
-            Text("Tarih: ${formatDate(payment.paymentDateMillis)}")
+            Text("Date: ${formatDate(payment.paymentDateMillis)}")
 
             if (payment.note.isNotBlank()) {
-                Text("Not: ${payment.note}")
+                Text("Note: ${payment.note}")
             }
         }
     }
@@ -959,10 +959,10 @@ fun PaymentRow(
                 showDeleteDialog = false
             },
             title = {
-                Text("Ödeme silinsin mi?")
+                Text("Delete payment?")
             },
             text = {
-                Text("Bu ödeme silinirse kalan borç yeniden hesaplanır.")
+                Text("If this payment is deleted, the remaining debt will be recalculated.")
             },
             confirmButton = {
                 TextButton(
@@ -971,7 +971,7 @@ fun PaymentRow(
                         onDelete()
                     }
                 ) {
-                    Text("Sil")
+                    Text("Delete")
                 }
             },
             dismissButton = {
@@ -980,7 +980,7 @@ fun PaymentRow(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Vazgeç")
+                    Text("Cancel")
                 }
             }
         )

@@ -62,14 +62,14 @@ class CardViewModel(
                     paymentDateMillis = System.currentTimeMillis()
                 )
             )
-            dao.touchCard(cardId)
+            dao.touchCard(cardId, System.currentTimeMillis())
         }
     }
 
     fun deletePayment(payment: PaymentEntity) {
         viewModelScope.launch {
             dao.deletePayment(payment)
-            dao.touchCard(payment.cardId)
+            dao.touchCard(payment.cardId, System.currentTimeMillis())
         }
     }
 }
